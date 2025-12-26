@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -36,7 +37,7 @@ public static class Preferences
 
         var pumpProps = obj
             .Select(x => x.Key)
-            .Where(prop => prop.Contains("PUMP"))
+            .Where(prop => prop.StartsWith("ConfigBuilder_PUMP_"))
             .ToArray();
         foreach (var prop in pumpProps)
         {
@@ -45,5 +46,38 @@ public static class Preferences
 
         obj["ConfigBuilder_PUMP_VirtualPumpPlugin_Enabled"] = "true";
         obj["ConfigBuilder_PUMP_VirtualPumpPlugin_Visible"] = "true";
+    }
+
+    public static void Encode(JsonObject prefs, string masterKey)
+    {
+        var jsonSalt = prefs["security"]!["salt"]?.GetValue<string?>();
+        var saltBytes = jsonSalt is null 
+            ? RandomNumberGenerator.GetBytes(32)
+            : Convert.FromHexString(jsonSalt);
+        var saltString = Convert.ToHexString(saltBytes).ToLowerInvariant();
+
+        prefs["format"] = "aaps_encrypted";
+        prefs["security"]!["algorithm"] = "v1";
+        prefs["security"]!["salt"] = saltString;
+        var prefsContentJson = JsonSerializer.Serialize(prefs["content"], JsonOptions.Compact)
+            .Replace("\r\n", "\n");
+
+        prefs["security"]!["content_hash"] = CryptoUtil.Sha256(prefsContentJson).ToLowerInvariant();
+        prefs["content"] = CryptoUtil.Encrypt(masterKey, saltBytes, prefsContentJson)!;
+    }
+    
+    private static class JsonOptions
+    {
+        public static JsonSerializerOptions Intended { get; } = new()
+        {
+            WriteIndented = true,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        };
+        
+        public static JsonSerializerOptions Compact { get; } = new()
+        {
+            WriteIndented = false,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        };
     }
 }

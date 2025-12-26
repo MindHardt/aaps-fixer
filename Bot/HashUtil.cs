@@ -40,6 +40,8 @@ public static partial class HashUtil
             {
                 ["file_hash"] = "--to-be-calculated--",
                 ["algorithm"] = original["security"]?["algorithm"]?.DeepClone()
+                ["salt"] = original["security"]?["salt"]?.DeepClone()
+                ["content_hash"] = original["security"]?["content_hash"]?.DeepClone()
             },
             ["content"] = original["content"]?.DeepClone().AsObject()!
         };

@@ -52,6 +52,7 @@ async Task HandleMessage(ITelegramBotClient bot, Update update, CancellationToke
     
     Preferences.Decode(prefs.AsObject(), password);
     Preferences.Fix(prefs["content"]!.AsObject());
+    Preferences.Encode(prefs.AsObject(), password);
 
     prefs = HashUtil.NormalizeJsonStructure(prefs);
     var fixedJson = HashUtil.CalculateAndSetFileHash(prefs.ToString());

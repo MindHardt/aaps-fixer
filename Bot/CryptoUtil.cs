@@ -12,8 +12,12 @@ public static class CryptoUtil
 
     public static string Sha256(string source)
     {
+        Span<byte> contentBuffer = stackalloc byte[Encoding.UTF8.GetByteCount(source)];
+        Encoding.UTF8.GetBytes(source, contentBuffer);
+        
         Span<byte> buffer = stackalloc byte[SHA256.HashSizeInBytes];
-        SHA256.HashData(Encoding.UTF8.GetBytes(source), buffer);
+        SHA256.HashData(contentBuffer, buffer);
+        
         return Convert.ToHexString(buffer);
     }
 
