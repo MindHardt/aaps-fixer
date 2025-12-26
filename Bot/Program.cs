@@ -63,4 +63,6 @@ async Task HandleMessage(ITelegramBotClient bot, Update update, CancellationToke
     
     var resultStream = new MemoryStream(Encoding.UTF8.GetBytes(fixedJson));
     await bot.SendDocument(update.Message.Chat.Id, new InputFileStream(resultStream, fileName), cancellationToken: ct);
+    logger.Information("Fixed preferences {Prefs} for user {User}",
+        fileName, update.Message.Chat.Username);
 }
