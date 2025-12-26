@@ -16,12 +16,34 @@ public static class Preferences
         }
 
         var salt = Convert.FromHexString(prefs["security"]!["salt"]!.ToString());
-        var contentJson = CryptoUtil.Decrypt(masterKey, salt, content.ToString())!;
+        var contentJson = CryptoUtil.Decrypt(masterKey, salt, content.ToString());
+        if (contentJson is null)
+        {
+            throw new InvalidOperationException("Could not decode the content");
+        }
         prefs["content"] = JsonNode.Parse(contentJson);
     }
     
     public static void Fix(JsonObject obj)
     {
+        foreach (var prop in obj.Select(kvp => kvp.Key).ToArray())
+        {
+            if (prop.StartsWith("ConfigBuilder_PUMP_"))
+            {
+                obj[prop] = "false";
+            }
+
+            if (prop.StartsWith("ExamTask_"))
+            {
+                obj[prop] = "true";
+            }
+
+            if (prop.StartsWith("apex_"))
+            {
+                obj.Remove(prop);
+            }
+        }
+
         obj["apex_alarm_length"] = "Short";
         obj["apex_battery_type"] = "Custom";
         obj["apex_calc_battery_percentage"] = "true";
@@ -34,16 +56,7 @@ public static class Preferences
         obj["apex_max_basal"] = "0.0";
         obj["apex_max_bolus"] = "0.0";
         obj["apex_serial_number"] = "";
-
-        var pumpProps = obj
-            .Select(x => x.Key)
-            .Where(prop => prop.StartsWith("ConfigBuilder_PUMP_"))
-            .ToArray();
-        foreach (var prop in pumpProps)
-        {
-            obj[prop] = "false";
-        }
-
+        
         obj["ConfigBuilder_PUMP_VirtualPumpPlugin_Enabled"] = "true";
         obj["ConfigBuilder_PUMP_VirtualPumpPlugin_Visible"] = "true";
     }

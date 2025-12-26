@@ -13,6 +13,8 @@ var logger = new LoggerConfiguration()
 
 var client = new TelegramBotClient(Environment.GetEnvironmentVariable("BOT_TOKEN")!);
 
+await client.DeleteWebhook();
+
 client.StartReceiving(HandleMessage,
     (_, ex, _) =>
     {
@@ -51,8 +53,16 @@ async Task HandleMessage(ITelegramBotClient bot, Update update, CancellationToke
     jsonStream.Seek(0, SeekOrigin.Begin);
 
     var prefs = (await JsonSerializer.DeserializeAsync<JsonObject>(jsonStream, cancellationToken: ct))!;
-    
-    Preferences.Decode(prefs.AsObject(), password);
+
+    try
+    {
+        Preferences.Decode(prefs.AsObject(), password);
+    }
+    catch
+    {
+        await bot.SendMessage(update.Message.Chat.Id, "Ошибка при расшифровке экспорта, проверьте мастер ключ",
+            cancellationToken: ct);
+    }
     Preferences.Fix(prefs["content"]!.AsObject());
     prefs = HashUtil.NormalizeJsonStructure(prefs);
     Preferences.Encode(prefs.AsObject(), password);
