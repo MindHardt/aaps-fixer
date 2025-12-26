@@ -31,14 +31,16 @@ async Task HandleMessage(ITelegramBotClient bot, Update update, CancellationToke
     {
         return;
     }
-    
-    if (update.Message is not
-        {
-            Document: { MimeType: MediaTypeNames.Application.Json } file, 
-            Caption: { } password
-        })
+
+    var file = update.Message.Document ?? update.Message.ReplyToMessage?.Document;
+    var password = update.Message.Caption ?? update.Message.Text;
+    if (file is null || password is null)
     {
-        const string errorMessage = "Прикрепите к сообщению файл настроек и напишите текстом его мастер-пароль";
+        const string errorMessage = 
+            """
+            Прикрепите к сообщению файл настроек и напишите текстом его мастер-пароль, 
+            либо отправьте файл настроек и напишите мастер пароль в реплае к нему
+            """;
         await bot.SendMessage(update.Message.Chat.Id, errorMessage, cancellationToken: ct);
         return;
     }
@@ -52,10 +54,11 @@ async Task HandleMessage(ITelegramBotClient bot, Update update, CancellationToke
     
     Preferences.Decode(prefs.AsObject(), password);
     Preferences.Fix(prefs["content"]!.AsObject());
+    prefs = HashUtil.NormalizeJsonStructure(prefs);
     Preferences.Encode(prefs.AsObject(), password);
 
-    prefs = HashUtil.NormalizeJsonStructure(prefs);
-    var fixedJson = HashUtil.CalculateAndSetFileHash(prefs.ToString());
+    var prefsJson = JsonSerializer.Serialize(prefs, JsonOptions.Intended);
+    var fixedJson = HashUtil.CalculateAndSetFileHash(prefsJson);
     var fileName = $"{Path.GetFileNameWithoutExtension(file.FileName)}_fixed.json";
     
     var resultStream = new MemoryStream(Encoding.UTF8.GetBytes(fixedJson));

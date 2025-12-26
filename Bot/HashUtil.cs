@@ -23,31 +23,26 @@ public static partial class HashUtil
         return Convert.ToHexStringLower(hashBytes);
     }
 
-    public static JsonObject NormalizeJsonStructure(JsonObject original)
+    public static JsonObject NormalizeJsonStructure(JsonObject original) => new()
     {
-        var normalized = new JsonObject
+        ["format"] = original["format"]?.DeepClone(),
+        ["metadata"] = new JsonObject
         {
-            ["format"] = original["format"]?.DeepClone(),
-            ["metadata"] = new JsonObject
-            {
-                ["device_name"] = original["metadata"]?["device_name"]?.DeepClone(),
-                ["created_at"] = original["metadata"]?["created_at"]?.DeepClone(),
-                ["aaps_version"] = original["metadata"]?["aaps_version"]?.DeepClone(),
-                ["aaps_flavour"] = original["metadata"]?["aaps_flavour"]?.DeepClone(),
-                ["device_model"] = original["metadata"]?["device_model"]?.DeepClone()
-            },
-            ["security"] = new JsonObject
-            {
-                ["file_hash"] = "--to-be-calculated--",
-                ["algorithm"] = original["security"]?["algorithm"]?.DeepClone()
-                ["salt"] = original["security"]?["salt"]?.DeepClone()
-                ["content_hash"] = original["security"]?["content_hash"]?.DeepClone()
-            },
-            ["content"] = original["content"]?.DeepClone().AsObject()!
-        };
-
-        return normalized;
-    }
+            ["device_name"] = original["metadata"]?["device_name"]?.DeepClone(),
+            ["created_at"] = original["metadata"]?["created_at"]?.DeepClone(),
+            ["aaps_version"] = original["metadata"]?["aaps_version"]?.DeepClone(),
+            ["aaps_flavour"] = original["metadata"]?["aaps_flavour"]?.DeepClone(),
+            ["device_model"] = original["metadata"]?["device_model"]?.DeepClone()
+        },
+        ["security"] = new JsonObject
+        {
+            ["file_hash"] = "--to-be-calculated--",
+            ["algorithm"] = original["security"]?["algorithm"]?.DeepClone(),
+            ["salt"] = original["security"]?["salt"]?.DeepClone(),
+            ["content_hash"] = original["security"]?["content_hash"]?.DeepClone()
+        },
+        ["content"] = original["content"]?.DeepClone()
+    };
 
     [GeneratedRegex("(\"file_hash\"\\s*:\\s*\")(--to-be-calculated--)(\")")]
     private static partial Regex ToBeCalculatedRegex();

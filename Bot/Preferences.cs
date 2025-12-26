@@ -65,19 +65,4 @@ public static class Preferences
         prefs["security"]!["content_hash"] = CryptoUtil.Sha256(prefsContentJson).ToLowerInvariant();
         prefs["content"] = CryptoUtil.Encrypt(masterKey, saltBytes, prefsContentJson)!;
     }
-    
-    private static class JsonOptions
-    {
-        public static JsonSerializerOptions Intended { get; } = new()
-        {
-            WriteIndented = true,
-            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-        };
-        
-        public static JsonSerializerOptions Compact { get; } = new()
-        {
-            WriteIndented = false,
-            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-        };
-    }
 }
